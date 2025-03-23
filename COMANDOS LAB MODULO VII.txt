@@ -1,0 +1,134 @@
+PRACTICA 1
+  PRÁCTICA NFS - COMPARTIR ARCHIVOS ENTRE LINUX (ORACLE LINUX)
+  Dirección IP del Servidor NFS: 10.0.0.11
+  Dirección IP del Cliente: 10.0.0.13
+
+SERVIDOR PRINCIPAL (10.0.0.11) 
+
+1. Instalar servidor NFS:
+sudo dnf install nfs-utils -y
+
+2. Crear directorio compartido:
+sudo mkdir -p /srv/nfs/OS3
+
+3. Crear 100 archivos:
+ cd /srv/nfs/OS3
+ touch adrian 1..100
+
+4. Asignar permisos:
+sudo chmod -R 755 /srv/nfs/OS3
+sudo chown -R nobody:nogroup /srv/nfs/OS3
+
+5. Configurar exports:
+sudo nano /etc/exports
+
+Agregar esta línea:
+  /srv/nfs/OS3 10.0.0.13(rw,sync,no_subtree_check,no_root_squash)
+
+6. Aplicar exportaciones:
+sudo exportfs -ra
+
+7. Iniciar servicios:
+sudo systemctl enable --now nfs-server
+sudo systemctl enable --now rpcbind
+
+8. Verificar estado:
+sudo systemctl status nfs-server
+
+9. Configurar Firewall:
+sudo firewall-cmd --permanent --add-service=nfs
+sudo firewall-cmd --permanent --add-service=mountd
+sudo firewall-cmd --permanent --add-service=rpc-bind
+sudo firewall-cmd --reload
+
+
+CLIENTE NFS (10.0.0.13) 
+
+1. Instalar cliente NFS:
+sudo dnf install nfs-utils -y
+
+2. Verificar exportaciones disponibles:
+showmount -e 10.0.0.11
+
+3. Crear punto de montaje:
+sudo mkdir -p /mnt/OS3
+
+4. Montar directorio compartido:
+sudo mount -t nfs 10.0.0.11:/srv/nfs/OS3 /mnt/OS3
+
+5. Verificar acceso:
+ls /mnt/OS3
+
+6. Montaje permanente en /etc/fstab:
+sudo nano /etc/fstab
+
+Agregar al final:
+10.0.0.11:/srv/nfs/OS3 /mnt/OS3 nfs defaults 0 0
+
+7. Probar montaje automático:
+sudo mount -a
+sudo reboot (y luego verificar: ls /mnt/OS3)
+
+
+ =====------------------------------------------------------------------------------------------
+
+PRACTICA 2
+
+sudo yum install samba*
+systemctl start smb
+systemctl enable smb
+systemctl status smb
+sudo systemctl enable smb --now
+sudo systemctl enable nmb --now
+
+sudo mkdir -p /srv/samba/practica
+cd
+ touch adrian 1..100
+sudo groupadd sambagrupo
+sudo useradd adrian
+sudo usermod -aG sambagrupo adrian
+sudo chown -R root:sambagrupo /srv/samba/practica
+sudo chmod -R 2770 /srv/samba/practica
+sudo smbpasswd -a 
+
+
+
+sudo nano /etc/samba/smb.conf
+
+[practica]
+   path = /srv/samba/practica
+   valid users = @sambagrupo
+   read only = no
+
+sudo chcon -t samba_share_t /srv/samba/practica -R
+
+sudo firewall-cmd --add-service=samba --permanent
+sudo firewall-cmd --reload
+
+------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
